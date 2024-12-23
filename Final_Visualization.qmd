@@ -1,0 +1,543 @@
+---
+title: "Alec Zhang UFC Fighter Data Visualization"
+format: 
+  revealjs:
+      theme: dark
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+## Slide 1: Data Breakdown
+
+::: columns
+-   This data is from a kaggle dataset that covers UFC data from the start up to UFC 292 which happened in August last year. The data covers the various actions taken during the fight i.e how many strikes one fighter landed, how long the fight took, etc. I picked this data as a UFC fan because I wanted to see if some of the narratives around the sport were true from a pure data perspective as well as just wanting to take a look at one of my favorite fights from one of my favorite fighters who likely just fought for the last time this past weekend. The data set can be found here <https://www.kaggle.com/datasets/akshaysinghim/ufc-fight-data-1993-to-2023?select=ufc_data_till_UFC_292.csv>
+:::
+
+## Slide 2: UFC fighter trends
+
+::: panel-tabset
+### Striking and Grappling Over Time
+
+```{r}
+#| label: datawrangling
+
+library(tidyverse)
+library(stringr) #packages
+ufc_data = read.csv("data/ufc_data.csv") %>% 
+  mutate(date = as.Date(date, format = "%B %d, %Y")) %>% #changing the date to be readable
+  separate(R_SIG_STR., into = c("R_SIG_STR_Landed", "R_SIG_STR_Attempts"), sep = " of ") %>% 
+  mutate(
+    R_SIG_STR_Landed = as.numeric(R_SIG_STR_Landed),
+    R_SIG_STR_Attempts = as.numeric(R_SIG_STR_Attempts)
+  ) %>% #We take the format of XX of YY and split into attempts and landed for the entire dataset
+  separate(B_SIG_STR., into = c("B_SIG_STR_Landed", "B_SIG_STR_Attempts"), sep = " of ") %>%
+  mutate(
+    B_SIG_STR_Landed = as.numeric(B_SIG_STR_Landed),
+    B_SIG_STR_Attempts = as.numeric(B_SIG_STR_Attempts)
+  ) %>% 
+  separate(R_TOTAL_STR., into = c("R_TOTAL_STR_Landed", "R_TOTAL_STR_Attempts"), sep = " of ") %>% #Then once we split, we add in the new variables
+  mutate(
+    R_TOTAL_STR_Landed = as.numeric(R_TOTAL_STR_Landed),
+    R_TOTAL_STR_Attempts = as.numeric(R_TOTAL_STR_Attempts)
+  ) %>% 
+  separate(B_TOTAL_STR., into = c("B_TOTAL_STR_Landed", "B_TOTAL_STR_Attempts"), sep = " of ") %>%
+  mutate(
+    B_TOTAL_STR_Landed = as.numeric(B_TOTAL_STR_Landed),
+    B_TOTAL_STR_Attempts = as.numeric(B_TOTAL_STR_Attempts)
+  ) %>% 
+  separate(R_HEAD, into = c("R_HEAD_Landed", "R_HEAD_Attempts"), sep = " of ") %>%
+  mutate(
+    R_HEAD_Landed = as.numeric(R_HEAD_Landed),
+    R_HEAD_Attempts = as.numeric(R_HEAD_Attempts)
+  ) %>% 
+  separate(R_BODY, into = c("R_BODY_Landed", "R_BODY_Attempts"), sep = " of ") %>%
+  mutate(
+    R_BODY_Landed = as.numeric(R_BODY_Landed),
+    R_BODY_Attempts = as.numeric(R_BODY_Attempts)
+  ) %>% 
+  separate(R_LEG, into = c("R_LEG_Landed", "R_LEG_Attempts"), sep = " of ") %>%
+  mutate(
+    R_LEG_Landed = as.numeric(R_LEG_Landed),
+    R_LEG_Attempts = as.numeric(R_LEG_Attempts)
+  ) %>% 
+  separate(R_DISTANCE, into = c("R_DISTANCE_Landed", "R_DISTANCE_Attempts"), sep = " of ") %>%
+  mutate(
+    R_DISTANCE_Landed = as.numeric(R_DISTANCE_Landed),
+    R_DISTANCE_Attempts = as.numeric(R_DISTANCE_Attempts)
+  ) %>% 
+  separate(R_CLINCH, into = c("R_CLINCH_Landed", "R_CLINCH_Attempts"), sep = " of ") %>%
+  mutate(
+    R_CLINCH_Landed = as.numeric(R_CLINCH_Landed),
+    R_CLINCH_Attempts = as.numeric(R_CLINCH_Attempts)
+  ) %>% 
+  separate(R_GROUND, into = c("R_GROUND_Landed", "R_GROUND_Attempts"), sep = " of ") %>%
+  mutate(
+    R_GROUND_Landed = as.numeric(R_GROUND_Landed),
+    R_GROUND_Attempts = as.numeric(R_GROUND_Attempts)
+  ) %>% 
+  separate(R_TD, into = c("R_TD_Landed", "R_TD_Attempts"), sep = " of ") %>%
+  mutate(
+    R_TD_Landed = as.numeric(R_TD_Landed),
+    R_TD_Attempts = as.numeric(R_TD_Attempts)
+  ) %>% #Shifting to Blue now
+  ##############################
+  separate(B_HEAD, into = c("B_HEAD_Landed", "B_HEAD_Attempts"), sep = " of ") %>%
+  mutate(
+    B_HEAD_Landed = as.numeric(B_HEAD_Landed),
+    B_HEAD_Attempts = as.numeric(B_HEAD_Attempts)
+  ) %>% 
+  separate(B_BODY, into = c("B_BODY_Landed", "B_BODY_Attempts"), sep = " of ") %>%
+  mutate(
+    B_BODY_Landed = as.numeric(B_BODY_Landed),
+    B_BODY_Attempts = as.numeric(B_BODY_Attempts)
+  ) %>% 
+  separate(B_LEG, into = c("B_LEG_Landed", "B_LEG_Attempts"), sep = " of ") %>%
+  mutate(
+    B_LEG_Landed = as.numeric(B_LEG_Landed),
+    B_LEG_Attempts = as.numeric(B_LEG_Attempts)
+  ) %>% 
+  separate(B_DISTANCE, into = c("B_DISTANCE_Landed", "B_DISTANCE_Attempts"), sep = " of ") %>%
+  mutate(
+    B_DISTANCE_Landed = as.numeric(B_DISTANCE_Landed),
+    B_DISTANCE_Attempts = as.numeric(B_DISTANCE_Attempts)
+  ) %>% 
+  separate(B_CLINCH, into = c("B_CLINCH_Landed", "B_CLINCH_Attempts"), sep = " of ") %>%
+  mutate(
+    B_CLINCH_Landed = as.numeric(B_CLINCH_Landed),
+    B_CLINCH_Attempts = as.numeric(B_CLINCH_Attempts)
+  ) %>% 
+  separate(B_GROUND, into = c("B_GROUND_Landed", "B_GROUND_Attempts"), sep = " of ") %>%
+  mutate(
+    B_GROUND_Landed = as.numeric(B_GROUND_Landed),
+    B_GROUND_Attempts = as.numeric(B_GROUND_Attempts)
+  ) %>% 
+  separate(B_TD, into = c("B_TD_Landed", "B_TD_Attempts"), sep = " of ") %>%
+  mutate(
+    B_TD_Landed = as.numeric(B_TD_Landed),
+    B_TD_Attempts = as.numeric(B_TD_Attempts)
+  ) %>% mutate(
+    R_SIG_STR_pct = as.numeric(sub("%", "", R_SIG_STR_pct)) / 100
+  ) %>% 
+  mutate(
+    B_SIG_STR_pct = as.numeric(sub("%", "", B_SIG_STR_pct)) / 100
+  ) %>%  mutate(
+    R_TD_pct = as.numeric(sub("%", "", R_TD_pct)) / 100
+  ) %>% 
+  mutate(
+    B_TD_pct = as.numeric(sub("%", "", B_TD_pct)) / 100
+  )  %>% 
+  janitor::clean_names()%>% 
+  mutate(
+    total_sig_str_landed = r_sig_str_landed + b_sig_str_landed,
+    total_sig_str_attempts = r_sig_str_attempts + b_sig_str_attempts,
+    total_total_str_landed = r_total_str_landed + b_total_str_landed,
+    total_total_str_attempts = r_total_str_attempts + b_total_str_attempts,
+    total_head_landed = r_head_landed + b_head_landed,
+    total_head_attempts = r_head_attempts + b_head_attempts,
+    total_body_landed = r_body_landed + b_body_landed,
+    total_body_attempts = r_body_attempts + b_body_attempts,
+    total_leg_landed = r_leg_landed + b_leg_landed,
+    total_leg_attempts = r_leg_attempts + b_leg_attempts,
+    total_distance_landed = r_distance_landed + b_distance_landed,
+    total_distance_attempts = r_distance_attempts + b_distance_attempts,
+    total_clinch_landed = r_clinch_landed + b_clinch_landed,
+    total_clinch_attempts = r_clinch_attempts + b_clinch_attempts,
+    total_ground_landed = r_ground_landed + b_ground_landed,
+    total_ground_attempts = r_ground_attempts + b_ground_attempts,
+    total_td_landed = r_td_landed + b_td_landed,
+    total_td_attempts = r_td_attempts + b_td_attempts,
+    total_rev = r_rev + b_rev,
+    total_kd = r_kd + b_kd,
+    total_sub_att = r_sub_att + b_sub_att
+  ) %>% # We also want to take totals for future visualizations 
+  mutate(
+    fight_name = sprintf("%s vs %s", str_extract(r_fighter, "\\w+$"), str_extract(b_fighter, "\\w+$")) #additionally we added a column to name all of the fights the way the UFC does it (i.e last name A vs last name B)
+  )
+
+ufc_weight_class_split = #one of the data sets is looking at smaller vs bigger weight classes s owe split the data up here
+    ufc_data %>% 
+    mutate(
+    weight_class = case_when(
+      fight_type %in% c("Flyweight Bout", "UFC Flyweight Title Bout", "Bantamweight Bout", "UFC Bantamweight Title Bout", "Featherweight Bout", "UFC Featherweight Title Bout", "Lightweight Bout", "UFC Lightweight Title Bout", "Welterweight Bout", "UFC Welterweight Title Bout") ~ "Smaller",
+      fight_type %in% c("Middleweight Bout", "UFC Middleweight Title Bout", "Light Heavyweight Bout", "UFC Light Heavyweight Title Bout", "Heavyweight Bout", "UFC Heavyweight Title Bout") ~ "Bigger",
+       TRUE ~ "Smaller" #the data also includes women in smaller
+    )
+  )
+
+ufc_yearly = ufc_data %>% #we also wanted to see the data year by year so we cumulated the stats by year
+  mutate(year = format(date, "%Y")) %>%  # Extract year from date
+  group_by(year) %>% 
+  summarize(across(where(is.numeric), sum, na.rm = TRUE)) %>% 
+  mutate(total_leg_landed = r_leg_landed + b_leg_landed) %>% 
+  mutate(total_body_landed = r_body_landed + b_body_landed) %>% 
+  mutate(total_head_landed = r_head_landed + b_head_landed) %>% 
+  mutate(total_leg_attempts = r_leg_attempts + b_leg_attempts) %>% 
+  mutate(total_body_attempts = r_body_attempts + b_body_attempts) %>% 
+  mutate(total_head_attempts = r_head_attempts + b_head_attempts) %>% 
+  mutate(total_td_landed = r_td_landed + b_td_landed) %>% 
+  mutate(total_sub_att = r_sub_att + b_sub_att) %>%
+  left_join(
+    ufc_data %>% 
+      mutate(year = format(date, "%Y")) %>% 
+      group_by(year) %>% 
+      summarize(fights = n()),
+    by = "year"
+  )
+
+striking_data <- ufc_yearly %>% #additionally we have a visualization that looks at different striking and grappling metrics, so that is what we are splitting up and dividing here
+  pivot_longer(cols = c(total_head_landed, total_body_landed, total_leg_landed),
+               names_to = "type",
+               values_to = "strikes_landed") %>%
+  mutate(
+    strikes_per_fight = strikes_landed / fights,
+    strike_type = recode(type, 
+                  total_head_landed = "Head", 
+                  total_body_landed = "Body", 
+                  total_leg_landed = "Leg")
+  )
+
+
+#same as above but with grappling metrics
+grappling_data <- ufc_yearly %>% 
+  pivot_longer(cols = c(total_td_landed, total_sub_att, total_rev),
+               names_to = "type",
+               values_to = "g_moves") %>%
+  mutate(
+    g_moves_per_fight = g_moves / fights,
+    move_type = recode(type, 
+                  total_td_landed = "Takedown", 
+                  total_sub_att = "Sub Attempt", 
+                  total_rev = "Reversal")
+  )
+
+#now this is getting information from a certain fight that we are takign a closer look at
+hvp = ufc_data %>% 
+  filter(fight_name == "Poirier vs Hooker")
+
+# these are the actions of the red corner fighter
+poirier_actions = hvp %>%
+  select(contains("r_")) %>%
+  select(-starts_with("b_"), -contains("total_")) %>% 
+  mutate(fighter = "Poirier")
+
+#these are the actions of the blue corner fighter
+hooker_actions = hvp %>%
+  select(contains("b_")) %>% 
+  select(-starts_with("r_"), -contains("total_")) %>% 
+  mutate(fighter = "Hooker")
+
+# Rename the columns to remove the prefix
+colnames(poirier_actions) = sub("^r_", "", colnames(poirier_actions)) 
+colnames(hooker_actions) = sub("^b_", "", colnames(hooker_actions))
+
+# Combine the data back together for comparison
+hvp_actions = bind_rows(poirier_actions, hooker_actions) %>%
+  rename(fighter = fighter...24) %>% 
+  select(-"fighter...1") %>% 
+  mutate(fighter = factor(fighter, levels =   c("Poirier", "Hooker")))
+```
+
+```{r}
+#| label: Graph-1
+
+library(tidyverse)
+library(patchwork)
+
+
+striking_over_time = ggplot(data = striking_data, aes(x = as.numeric(year), y = strikes_per_fight, color = strike_type)) + #looking at striking data over time and color based on strike types
+  geom_line() +
+   labs(
+    x = NULL,
+    y = "Number of Strikes per Fight",
+    color = "Strike Types"
+  ) + #labels
+  scale_color_manual(values = c("red", "green", "blue"), breaks = c("Head", "Body", "Leg")) + #changing the colors to be related to the correct labels
+  theme_minimal() +
+  ggtitle("Striking Over The Years") + #title
+  theme(
+    legend.justification = c(1, 0.5),
+    legend.position = "inside",
+    legend.position.inside = c(1,0.6),
+    legend.title = element_text(size = 8),
+    legend.text = element_text(size = 6),
+    legend.key.size = unit(.25, "cm"),
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_blank()
+  ) #moving the legend inside as well as some additional themeing
+
+
+grappling_over_time = ggplot(data = grappling_data, aes(x = as.numeric(year), y = g_moves_per_fight, color = move_type)) +  #same process as above for grappling
+    geom_line() +
+    scale_color_manual(values = c("red", "green", "blue"), breaks = c("Takedown", "Sub Attempt", "Reversal")) +
+    theme_minimal() + 
+    labs(
+      x = "Years",
+      y = "Ground Moves per Fight",
+      color = "Move Types"
+    ) +
+  ggtitle("Grappling Over The Years") +
+  theme(
+    legend.justification = c(1, 0.5),
+    legend.position = "inside",
+    legend.position.inside = c(1,0.5),
+    legend.title = element_text(size = 8),
+    legend.text = element_text(size = 6),
+    legend.key.size = unit(.25, "cm"),
+    plot.title = element_text(hjust = 0.5)
+  )
+
+
+
+striking_over_time / grappling_over_time #using patchwork to put the plots together
+
+```
+
+### Explanation
+
+::: {style="font-size:30px"}
+-   There is a common narrative that fighters have gotten significantly better over time. Taking a look at the trend we can see that striking numbers have increased, with head strikes pulling away in terms of how effective they are. However this could also show that defense has gotten better against leg and body strikes and so fighters have opted to go to the head instead. However grappling seems to have stagnated, if not worsened over time. But there is nuance in this as it is definitely true that fighters have gotten better at the ground aspects of MMA, which could explain why offensive statistics have not increased much on the ground.
+:::
+:::
+
+## Slide 3: Big vs Small Weight Classes
+
+::: panel-tabset
+### Stats per Weight Class
+
+```{r}
+#| label: BiggervsSmaller
+
+
+library(tidyverse)
+library(ggrepel)
+library(patchwork)
+
+label_info1 = 
+  ufc_weight_class_split %>% 
+  group_by(weight_class) %>% 
+  slice_max(order_by = total_sig_str_landed) %>% 
+  mutate(fight_name = gsub(" vs ", "\nvs ", fight_name)) #information for the labels on the striking graph
+
+label_info2 = 
+  ufc_weight_class_split %>% 
+  group_by(weight_class) %>% 
+  slice_max(order_by = total_td_landed) %>% 
+  mutate(fight_name = gsub(" vs ", "\n vs ", fight_name))
+#label information for the grappling graph
+
+strikes_by_weight = ggplot(ufc_weight_class_split, aes(x = weight_class, y = total_sig_str_landed)) +  #graphing strikes based on weight
+  geom_boxplot() +
+  theme_minimal() +
+  geom_text_repel(
+    data = label_info1,
+    aes(label = fight_name),
+    size = 3,
+    min.segment.length = 0,
+    box.padding = 1.5,
+    seed = 8876,
+    hjust = -0.4,
+    vjust = 1
+  ) + #adding in the line to the name of the fight that the record of strikes is in for each category
+  labs(
+    x = "Weight Division",
+    y = "Total Significant Strikes Landed"
+  ) #labeling
+
+td_by_weight = ggplot(ufc_weight_class_split, aes(x = weight_class, y = total_td_landed)) + #graphing takedowns based on weight category
+  geom_boxplot() +
+  theme_minimal() +
+  geom_text_repel(
+    data = label_info2,
+    aes(label = fight_name),
+    size = 3,            # Set the size of the text outside of aes()
+    min.segment.length = 0,
+    box.padding = 1.8,
+    seed = 8876,
+    hjust = -0.8,
+    vjust = 0.3
+  ) + #same idea of marking the records
+  labs(
+    x = "Weight Division",
+    y = "Total Takedowns Landed"
+  ) #labels
+
+last_round_by_weight = ggplot(ufc_weight_class_split, aes(x = weight_class, y = last_round)) + #graphing when the last round data for the weight classes
+  geom_boxplot() +
+  theme_minimal() +
+  labs(
+    x = "Weight Division",
+    y= "Last Round of the Fight"
+  )
+  
+
+(strikes_by_weight + td_by_weight) + (last_round_by_weight) #putting them all together
+
+```
+
+### Explanation
+
+::: {style="font-size:30px"}
+There is another common narrative that fighters in big weight classes are less skilled than their smaller counter parts (generally starting from Middleweight \~ 185 lbs). This data takes a look at this, and while I haven't tested if it is statistically significant, the median does seem higher. We can also see that the records are also higher in smaller weight classes for striking and wrestling than bigger weight classes. However, this can also be attributed to the fact that bigger weight classes hit harder and thus end fights faster, which is also true as seen in the last round of fights. Also to be noted that the way I wrangled the data, I included women in with the smaller weight category as all of their divisions count as lesser weight, but there is also a narrative about the level of skill between women and men that I didn't explore here.
+:::
+:::
+
+## Slide 4: Poirier vs Hooker Breakdown
+
+::: panel-tabset
+### Strike Types
+
+```{r}
+#| label: hooker vs Poirier
+library(tidyverse)
+library(patchwork)
+
+
+ 
+
+
+head_str = 
+  ggplot(hvp_actions, aes(x = fighter, y = head_landed, fill = fighter)) +
+  geom_bar(stat = "identity", position = "dodge") + #graphing head strikes
+  scale_fill_manual(values = c("Hooker" = "#0A2AD2", "Poirier" = "#D20A0A")) + 
+  #coloring manually
+  labs(
+    x = NULL ,
+    y = NULL,
+    fill = "Fighter"
+  ) + #labeling
+  theme_minimal() +
+  theme(legend.position = "none") +
+  annotate(
+    geom = "text", 
+    x = 0.5,
+    y = max(hvp_actions$head_landed) + 10,
+    label = "Head Strikes Landed",
+    hjust = 0, 
+    vjust = 1, 
+    size = 4,
+    family = "serif"
+  ) #adding the title as an annotation
+
+body_str = ggplot(hvp_actions, aes(x = fighter, y = body_landed, fill = fighter)) + geom_bar(stat = "identity") + #body strikes per fighter
+  scale_fill_manual(values = c("Hooker" = "#0A2AD2", "Poirier" = "#D20A0A")) +
+  labs(
+    x = NULL ,
+    y = NULL,
+    fill = "Fighter"
+  ) +
+  theme_minimal() + 
+  theme(legend.position = "none") +
+  annotate(
+    geom = "text", 
+    x = 0.5,
+    y = max(hvp_actions$body_landed) + 3,
+    label = "Body Strikes Landed",
+    hjust = 0, 
+    vjust = 1, 
+    size = 4,
+    family = "serif"
+  ) #title as annotation
+
+leg_str = 
+ggplot(hvp_actions, aes(x = fighter, y = leg_landed, fill = fighter)) + geom_bar(stat = "identity") + #leg strikes per fighter
+  scale_fill_manual(values = c("Hooker" = "#0A2AD2", "Poirier" = "#D20A0A")) +
+  labs(
+    x = NULL,
+    y = NULL,
+    fill = "Fighter"
+  ) +
+  theme_minimal() +
+  annotate(
+    geom = "text", 
+    x = 0.5,
+    y = max(hvp_actions$leg_landed) + 3,
+    label = "Leg Strikes Landed",
+    hjust = 0, 
+    vjust = 1, 
+    size = 4,
+    family = "serif"
+  )
+
+ground_str =  #ground strikes per fighter
+ggplot(hvp_actions, aes(x = fighter, y = ground_landed, fill = fighter)) + geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("Hooker" = "#0A2AD2", "Poirier" = "#D20A0A")) +
+  labs(
+    x = NULL ,
+    y = NULL,
+    fill = "Fighter"
+  ) +
+  theme_minimal() +
+  annotate(
+    geom = "text", 
+    x = 0.5,
+    y = max(hvp_actions$ground_landed) + 3,
+    label = "Ground Strikes Landed",
+    hjust = 0, 
+    vjust = 1, 
+    size = 4,
+    family = "serif"
+  )
+
+dist_str =  #strikes from distance per fighter
+ggplot(hvp_actions, aes(x = fighter, y = distance_landed, fill = fighter)) +      geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("Hooker" = "#0A2AD2", "Poirier" = "#D20A0A")) +
+  labs(
+    x = NULL ,
+    y = NULL,
+    fill = "Fighter"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  annotate(
+    geom = "text", 
+    x = 0.5,
+    y = max(hvp_actions$distance_landed) + 5,
+    label = "Distance Strikes Landed",
+    hjust = 0, 
+    vjust = 1, 
+    size = 4,
+    family = "serif"
+  ) 
+
+clinch_str = #clinch strikes per fighter
+ggplot(hvp_actions, aes(x = fighter, y = clinch_landed, fill = fighter)) +        geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("Hooker" = "#0A2AD2", "Poirier" = "#D20A0A")) +
+  labs(
+    x = NULL ,
+    y = NULL,
+    fill = "Fighter"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  annotate(
+    geom = "text", 
+    x = 0.5,
+    y = max(hvp_actions$leg_landed) + 3,
+    label = "Clinch Strikes Landed",
+    hjust = 0, 
+    vjust = 1, 
+    size = 4,
+    family = "serif"
+  )
+
+str_breakdown = head_str + body_str + leg_str # combining the plots to for the stirking breakdown graph
+
+str_breakdown
+
+```
+
+### Distance Breakdown
+
+```{r}
+dist_breakdown = dist_str + clinch_str + ground_str #combining the plots to make the distance breakdown graph
+
+dist_breakdown
+```
+
+### Explanation
+
+::: {style="font-size:30px"}
+This data is only looking at the fight Poirier vs Hooker. It was a very competitive fight, however the Poirier clearly won by the end. However, the nuances of this fight include things like how Hooker's strategy of hitting the legs and keeping the distance wasn't enough as Poirier's effectiveness up close and on the ground caused very significant damage to Hooker, thus winning him the fight. The fight can be seen here <https://www.youtube.com/watch?v=mr64Pu9LZ7A&ab_channel=ufcespanol>
+:::
+:::
